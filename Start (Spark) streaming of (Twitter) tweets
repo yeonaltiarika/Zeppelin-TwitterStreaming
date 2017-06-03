@@ -1,0 +1,15 @@
+case class Tweet(user: String, tweet: String, lat: Double, lon: Double)
+
+val ssc = new StreamingContext(sc, Seconds(2))
+
+val tweets = TwitterUtils.createStream(ssc, None).window(Seconds(10))
+tweets.foreachRDD(rdd => {
+    val df = rdd
+      .filter(_.getGeoLocation != null)
+      .map(t => Tweet(t.getUser.getName, t.getText, t.getGeoLocation.getLatitude, t.getGeoLocation.getLongitude))
+          
+    var items = df.collect
+    z.angularBind("data", items) 
+})
+
+ssc.start()
